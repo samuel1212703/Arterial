@@ -1,0 +1,6 @@
+{
+	"appId": "io.ionic.starter",
+	"appName": "ForøgDitOrdforråd",
+	"webDir": "build",
+	"bundledWebRuntime": false
+}
