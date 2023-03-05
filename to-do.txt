@@ -1,0 +1,2 @@
+* find better api
+* add option to favorite artworks
