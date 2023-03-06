@@ -9,6 +9,7 @@ import {
   IonLoading,
   IonButton,
   IonIcon,
+  IonSpinner,
 } from "@ionic/react";
 //import { Storage } from '@ionic/storage';
 import { useParams } from "react-router";
@@ -59,7 +60,6 @@ async function getArtworkFromArtic() {
     "/full/843,/0/default.jpg";
   const alternative_titles = [];
   if (artwork_info.data.alt_titles !== null) {
-    console.log(artwork_info.data.alt_titles);
     for (let alt_title of artwork_info.data.alt_titles) {
       alternative_titles.push(alt_title);
     }
@@ -122,49 +122,98 @@ async function getArtworkFromMet(IDs: number[]) {
   };
 }
 
+async function getPageAmountFromArtic() {
+  return await axios
+    .get(`https://api.artic.edu/api/v1/artworks?limit=0`)
+    .then((response) => {
+      return response.data.pagination.total_pages;
+    });
+}
+
+async function getPaginationFromArtic() {
+  //const randomID = Math.floor(Math.random() * IDs.length);
+  const artworks_info = await getPageAmountFromArtic().then((total_pages) => {
+    const randomPageNumber = Math.floor(Math.random() * total_pages);
+    return axios
+      .get(
+        `https://api.artic.edu/api/v1/artworks?page=${randomPageNumber}&limit=0`
+      )
+      .then((response) => {
+        return response.data;
+      });
+  });
+
+  const artworkCollection: ArtworkI[] = [];
+
+  artworks_info.data.forEach((artwork: any) => {
+    const image_url =
+      artworks_info.config.iiif_url +
+      "/" +
+      artwork.image_id +
+      "/full/843,/0/default.jpg";
+    artworkCollection.push({
+      id: artwork.id,
+      image_url: image_url,
+      title: artwork.title,
+      alt_titles: [],
+      artist_title: artwork.artist_title,
+      artist_id: artwork.artist_id,
+      date_display: artwork.date_display,
+      place_of_origin: artwork.place_of_origin,
+    });
+  });
+  return artworkCollection;
+}
+
 const Page: React.FC = () => {
   const { name } = useParams<{ name: string }>();
 
   const [artworkHistory, setArtworkHistory] = useState<ArtworkI[]>([]);
-  const [artworkHistoryPage, setArtworkHistoryPage] = useState(
-    artworkHistory.length
-  );
+  const [artworkHistoryPage, setArtworkHistoryPage] = useState(0);
   const [artData, setArtData] = useState<ArtworkI | null>(null);
   const [showLoading, setShowLoading] = useState(false);
 
   function getArtworkData() {
     setShowLoading(true); // Start loading effect
-    getMetArtworkIDs()
-      .then((MetIDs) => {
-        return getArtworkFromMet(MetIDs);
-      })
-      .then((result) => {
-        setArtData(result);
-        let newArtworkHistory = artworkHistory;
-        if (artworkHistory.length >= 9) {
-          newArtworkHistory = artworkHistory.slice(-1);
-        }
-        setArtworkHistory([result, ...newArtworkHistory]);
-        setArtworkHistoryPage(0); // A new artwork is added and going back should start at the beginning again
-      });
+    getPaginationFromArtic().then((result) => {
+      let newArtworkHistory = artworkHistory.concat(result);
+      console.log(artworkHistory.length, ">", result.length * 2);
+      setArtworkHistory(newArtworkHistory);
+      if (artworkHistory.length >= result.length * 2) {
+        setArtworkHistory(newArtworkHistory.slice(0, 24));
+      }
+
+      if (artworkHistory.length <= 11) {
+        setArtworkHistoryPage(0);
+      } else {
+        setArtworkHistoryPage(12); // 12 spaces for artworkHistory and 12 for the new results
+      }
+    });
     setShowLoading(false); // End Loading effect
   }
 
   function goBackToPreviousArtwork() {
-    setArtworkHistoryPage((artworkHistoryPage) => artworkHistoryPage + 1);
-    setArtData(artworkHistory[artworkHistoryPage + 1]);
-  }
-
-  function goForwardToNextArtwork() {
     setArtworkHistoryPage((artworkHistoryPage) => artworkHistoryPage - 1);
     setArtData(artworkHistory[artworkHistoryPage - 1]);
   }
 
+  function goForwardToNextArtwork() {
+    console.log(artworkHistoryPage, artworkHistory.length);
+    const step = 1;
+    if (artworkHistoryPage >= artworkHistory.length - 1) {
+      getArtworkData();
+    }
+
+    setArtworkHistoryPage((artworkHistoryPage) => artworkHistoryPage + step);
+    setArtData(artworkHistory[artworkHistoryPage + step]);
+  }
+
   if (firstRun) {
-    getMetArtworkIDs().then((MetIDs) => {
-      getArtworkFromMet(MetIDs);
-    });
-    //getArtworkData();
+    // getMetArtworkIDs().then((MetIDs) => {
+    //   getArtworkFromMet(MetIDs);
+    // });
+    //getArtworkFromArtic();
+    getArtworkData();
     firstRun = false;
   }
 
@@ -181,20 +230,18 @@ const Page: React.FC = () => {
 
       <IonContent fullscreen>
         <div>
-          {artworkHistory.length &&
-          artworkHistoryPage !== artworkHistory.length ? (
+          {artworkHistoryPage !== 0 ? (
             <IonButton onClick={() => goBackToPreviousArtwork()}>
               <IonIcon icon={arrowBackOutline}></IonIcon>Go Back
             </IonButton>
           ) : null}
-          <IonButton onClick={() => getArtworkData()}>
+          {/* <IonButton onClick={() => getArtworkData()}>
             <IonIcon icon={shuffleOutline}></IonIcon>Random
+          </IonButton> */}
+          <IonButton onClick={() => goForwardToNextArtwork()}>
+            <IonIcon icon={arrowForwardOutline}></IonIcon>Go Forward
           </IonButton>
-          {artworkHistory.length && artworkHistoryPage !== 0 ? (
-            <IonButton onClick={() => goForwardToNextArtwork()}>
-              <IonIcon icon={arrowForwardOutline}></IonIcon>Go Forward
-            </IonButton>
-          ) : null}
+          {showLoading ? <IonSpinner name="bubbles"></IonSpinner> : null}
         </div>
         {artData ? <Artwork {...artData}></Artwork> : null}
         <IonLoading isOpen={showLoading}></IonLoading>
