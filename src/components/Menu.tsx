@@ -9,17 +9,8 @@ import {
   IonMenuToggle,
   IonNote,
 } from "@ionic/react";
-
 import { useLocation } from "react-router-dom";
-import {
-  bookmarkOutline,
-  heartOutline,
-  heartSharp,
-  mailOutline,
-  mailSharp,
-  paperPlaneOutline,
-  paperPlaneSharp,
-} from "ionicons/icons";
+import { albumsOutline, bookmarkOutline, earthOutline } from "ionicons/icons";
 import "./Menu.css";
 import { auth, googleSignIn } from "..//external/firebase";
 
@@ -32,22 +23,16 @@ interface AppPage {
 
 const appPages: AppPage[] = [
   {
-    title: "GætEtOrd",
-    url: "/page/GætEtOrd",
-    iosIcon: mailOutline,
-    mdIcon: mailSharp,
+    title: "DiscoverArt",
+    url: "/page/DiscoverArt",
+    iosIcon: earthOutline,
+    mdIcon: earthOutline,
   },
   {
-    title: "Indstillinger",
-    url: "/page/Indstillinger",
-    iosIcon: paperPlaneOutline,
-    mdIcon: paperPlaneSharp,
-  },
-  {
-    title: "Favorites",
-    url: "/page/Favorites",
-    iosIcon: heartOutline,
-    mdIcon: heartSharp,
+    title: "SavedArt",
+    url: "/page/SavedArt",
+    iosIcon: albumsOutline,
+    mdIcon: albumsOutline,
   },
 ];
 

@@ -1,5 +1,5 @@
 import { IonCol, IonGrid, IonImg, IonRow, IonText } from "@ionic/react";
-import { ArtworkI } from "../pages/Page";
+import { ArtworkI } from "../pages/DiscoverArt";
 import "./Artwork.css";
 
 const Artwork: React.FC<ArtworkI> = (props: ArtworkI) => {
@@ -7,7 +7,11 @@ const Artwork: React.FC<ArtworkI> = (props: ArtworkI) => {
     <IonGrid id="artwork-info">
       <IonRow>
         <IonCol>
-          <IonImg id="artwork-image" src={props.image_url}></IonImg>
+          {props.image_url ? (
+            <IonImg id="artwork-image" src={props.image_url}></IonImg>
+          ) : (
+            <IonText>No image</IonText>
+          )}
         </IonCol>
       </IonRow>
       <IonRow>

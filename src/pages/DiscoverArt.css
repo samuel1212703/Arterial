@@ -1,0 +1,12 @@
+#go-back-button {
+  float: left;
+}
+
+#go-forward-button {
+  float: right;
+}
+
+#center-space {
+  display: flex;
+  justify-content: center;
+}

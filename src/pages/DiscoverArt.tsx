@@ -1,29 +1,41 @@
 import {
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar,
   IonButton,
   IonIcon,
   IonSpinner,
   IonRow,
   IonCol,
+  IonContent,
+  IonToolbar,
+  IonHeader,
+  IonPage,
+  IonButtons,
+  IonMenuButton,
+  IonTitle,
 } from "@ionic/react";
-//import { Storage } from '@ionic/storage';
 import { useParams } from "react-router";
 import Artwork from "../components/Artwork";
-import "./Page.css";
+import "./DiscoverArt.css";
 import axios from "axios";
-import React, { useState } from "react";
-import { arrowBackOutline, arrowForwardOutline } from "ionicons/icons";
+import React, { useEffect, useState } from "react";
+import {
+  arrowBackOutline,
+  arrowForwardOutline,
+  starOutline,
+  star,
+} from "ionicons/icons";
+import {
+  addArtworkToFirestore,
+  auth,
+  getFavoritedArtworksIDs,
+  removeArtworkFromFirestore,
+} from "../external/firebase";
 
+let firstRun = true;
 const artworkAmountPerPage = 12;
 const artworkAmountPerSession = artworkAmountPerPage * 2;
 
 export interface ArtworkI {
+  artwork_url: string;
   id: any;
   image_url: string;
   title: any;
@@ -32,6 +44,7 @@ export interface ArtworkI {
   artist_id: any;
   date_display: any;
   place_of_origin: any;
+  is_favorited: boolean;
 }
 
 async function getArtworkFromArtic() {
@@ -129,11 +142,20 @@ async function getPageAmountFromArtic() {
 }
 
 async function getPaginationFromArtic() {
+  const artwork_IDs: number[] = await getFavoritedArtworksIDs().then((res) => {
+    return res;
+  });
+
   const artworks_info = await getPageAmountFromArtic().then(
     async (total_pages) => {
       const randomPageNumber = Math.floor(Math.random() * total_pages);
       const response = await axios.get(
-        `https://api.artic.edu/api/v1/artworks?page=${randomPageNumber}&limit=${artworkAmountPerPage}`
+        `https://api.artic.edu/api/v1/artworks?page=${randomPageNumber}&limit=${artworkAmountPerPage}`,
+        {
+          headers: {
+            "SameSite": "secure",
+          },
+        }
       );
       return response.data;
     }
@@ -142,12 +164,20 @@ async function getPaginationFromArtic() {
   const artworkCollection: ArtworkI[] = [];
 
   artworks_info.data.forEach((artwork: any) => {
+    let isFavorited: boolean = false;
+
+    if (artwork_IDs.includes(artwork.id)) {
+      isFavorited = true;
+    }
+
     const image_url =
       artworks_info.config.iiif_url +
       "/" +
       artwork.image_id +
       "/full/843,/0/default.jpg";
+
     artworkCollection.push({
+      artwork_url: artwork.api_link,
       id: artwork.id,
       image_url: image_url,
       title: artwork.title,
@@ -156,12 +186,13 @@ async function getPaginationFromArtic() {
       artist_id: artwork.artist_id,
       date_display: artwork.date_display,
       place_of_origin: artwork.place_of_origin,
+      is_favorited: isFavorited,
     });
   });
   return artworkCollection;
 }
 
-const Page: React.FC = () => {
+const DiscoverArt: React.FC = () => {
   const { name } = useParams<{ name: string }>();
 
   const [artworkHistory, setArtworkHistory] = useState<ArtworkI[]>([]);
@@ -169,16 +200,20 @@ const Page: React.FC = () => {
   const [artData, setArtData] = useState<ArtworkI | null>(null);
   const [currentlyCollectingArtworks, setCurrentlyCollectingArtworks] =
     useState<boolean>(false);
+  const [isFavorited, setIsFavorited] = useState<boolean>(false);
 
   function getArtworkData() {
     setCurrentlyCollectingArtworks(true);
     getPaginationFromArtic().then((result) => {
       let newArtworkHistory = artworkHistory.concat(result);
+
       // Slice history if the length exceeds maximum
       if (newArtworkHistory.length > artworkAmountPerSession) {
         newArtworkHistory = newArtworkHistory.slice(0, artworkAmountPerSession);
       }
       setArtworkHistory(newArtworkHistory);
+
+      // Update Artwork History
       if (artworkHistory.length < artworkAmountPerPage - 1) {
         setArtworkHistoryPage(0);
       } else {
@@ -198,15 +233,37 @@ const Page: React.FC = () => {
   }
 
   function goForwardToNextArtwork() {
-    if (artworkHistoryPage >= artworkHistory.length - 1) {
-      if (!currentlyCollectingArtworks) {
-        getArtworkData();
-      }
+    if (
+      artworkHistoryPage >= artworkHistory.length - 1 &&
+      !currentlyCollectingArtworks
+    ) {
+      getArtworkData();
     }
+
+    // If there is no image, skip the artwork
+    if (artData) {
+      setIsFavorited(artworkHistory[artworkHistoryPage].is_favorited);
+    }
+
     changeArtworkHistoryPage(1);
-    if (artworkHistory[artworkHistoryPage].image_url === null) {
-      goForwardToNextArtwork();
+  }
+
+  function changeFavoritedStatus() {
+    setIsFavorited(isFavorited ? false : true);
+    const currentArtwork = artworkHistory[artworkHistoryPage];
+    if (!isFavorited) {
+      addArtworkToFirestore(currentArtwork.id, currentArtwork.artwork_url);
+    } else {
+      removeArtworkFromFirestore(currentArtwork.id);
     }
+  }
+
+  useEffect(() => {
+    setArtData(artworkHistory[artworkHistoryPage]);
+  }, [currentlyCollectingArtworks]);
+
+  if (firstRun) {
+    firstRun = !firstRun;
   }
 
   return (
@@ -225,16 +282,33 @@ const Page: React.FC = () => {
           <IonRow>
             <IonCol>
               {artworkHistoryPage !== 0 ? (
-                <IonButton onClick={() => goBackToPreviousArtwork()}>
+                <IonButton
+                  id="go-back-button"
+                  onClick={() => goBackToPreviousArtwork()}
+                >
                   <IonIcon icon={arrowBackOutline}></IonIcon>Go Back
                 </IonButton>
+              ) : null}
+            </IonCol>
+            <IonCol>
+              {auth.currentUser && !currentlyCollectingArtworks ? (
+                <div id="center-space">
+                  <IonIcon
+                    onClick={() => changeFavoritedStatus()}
+                    size="large"
+                    icon={isFavorited ? star : starOutline}
+                  ></IonIcon>
+                </div>
               ) : null}
             </IonCol>
             <IonCol>
               {currentlyCollectingArtworks ? (
                 <IonSpinner name="crescent"></IonSpinner>
               ) : (
-                <IonButton onClick={() => goForwardToNextArtwork()}>
+                <IonButton
+                  id="go-forward-button"
+                  onClick={() => goForwardToNextArtwork()}
+                >
                   Go Forward<IonIcon icon={arrowForwardOutline}></IonIcon>
                 </IonButton>
               )}
@@ -247,4 +321,4 @@ const Page: React.FC = () => {
   );
 };
 
-export default Page;
+export default DiscoverArt;

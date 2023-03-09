@@ -7,7 +7,6 @@ import {
 import { IonReactRouter } from "@ionic/react-router";
 import { Redirect, Route } from "react-router-dom";
 import Menu from "./components/Menu";
-import Page from "./pages/Page";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -27,6 +26,8 @@ import "@ionic/react/css/display.css";
 
 /* Theme variables */
 import "./theme/variables.css";
+import SavedArt from "./pages/SavedArt";
+import DiscoverArt from "./pages/DiscoverArt";
 
 setupIonicReact();
 
@@ -40,8 +41,11 @@ const App: React.FC = () => {
             <Route path="/" exact={true}>
               <Redirect to="/page/DiscoverArt" />
             </Route>
-            <Route path="/page/:name" exact={true}>
-              <Page />
+            <Route path="/page/DiscoverArt" exact={true}>
+              <DiscoverArt />
+            </Route>
+            <Route path="/page/SavedArt" exact={true}>
+              <SavedArt />
             </Route>
           </IonRouterOutlet>
         </IonSplitPane>

@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap");
 
 /** Ionic CSS Variables **/
 :root {
-  --ion-font-family: 'Noto Sans';
+  --ion-font-family: "Noto Sans" !important;
 
   /** primary **/
   --ion-color-primary: #2dd36f;
