@@ -150,12 +150,7 @@ async function getPaginationFromArtic() {
     async (total_pages) => {
       const randomPageNumber = Math.floor(Math.random() * total_pages);
       const response = await axios.get(
-        `https://api.artic.edu/api/v1/artworks?page=${randomPageNumber}&limit=${artworkAmountPerPage}`,
-        {
-          headers: {
-            "SameSite": "secure",
-          },
-        }
+        `https://api.artic.edu/api/v1/artworks?page=${randomPageNumber}&limit=${artworkAmountPerPage}`
       );
       return response.data;
     }
