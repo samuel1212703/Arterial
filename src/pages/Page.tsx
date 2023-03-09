@@ -6,24 +6,22 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  IonLoading,
   IonButton,
   IonIcon,
   IonSpinner,
+  IonRow,
+  IonCol,
 } from "@ionic/react";
 //import { Storage } from '@ionic/storage';
 import { useParams } from "react-router";
 import Artwork from "../components/Artwork";
 import "./Page.css";
 import axios from "axios";
-import { useState } from "react";
-import {
-  arrowBackOutline,
-  arrowForwardOutline,
-  shuffleOutline,
-} from "ionicons/icons";
+import React, { useState } from "react";
+import { arrowBackOutline, arrowForwardOutline } from "ionicons/icons";
 
-let firstRun = true;
+const artworkAmountPerPage = 12;
+const artworkAmountPerSession = artworkAmountPerPage * 2;
 
 export interface ArtworkI {
   id: any;
@@ -131,17 +129,15 @@ async function getPageAmountFromArtic() {
 }
 
 async function getPaginationFromArtic() {
-  //const randomID = Math.floor(Math.random() * IDs.length);
-  const artworks_info = await getPageAmountFromArtic().then((total_pages) => {
-    const randomPageNumber = Math.floor(Math.random() * total_pages);
-    return axios
-      .get(
-        `https://api.artic.edu/api/v1/artworks?page=${randomPageNumber}&limit=0`
-      )
-      .then((response) => {
-        return response.data;
-      });
-  });
+  const artworks_info = await getPageAmountFromArtic().then(
+    async (total_pages) => {
+      const randomPageNumber = Math.floor(Math.random() * total_pages);
+      const response = await axios.get(
+        `https://api.artic.edu/api/v1/artworks?page=${randomPageNumber}&limit=${artworkAmountPerPage}`
+      );
+      return response.data;
+    }
+  );
 
   const artworkCollection: ArtworkI[] = [];
 
@@ -171,50 +167,46 @@ const Page: React.FC = () => {
   const [artworkHistory, setArtworkHistory] = useState<ArtworkI[]>([]);
   const [artworkHistoryPage, setArtworkHistoryPage] = useState(0);
   const [artData, setArtData] = useState<ArtworkI | null>(null);
-  const [showLoading, setShowLoading] = useState(false);
+  const [currentlyCollectingArtworks, setCurrentlyCollectingArtworks] =
+    useState<boolean>(false);
 
   function getArtworkData() {
-    setShowLoading(true); // Start loading effect
+    setCurrentlyCollectingArtworks(true);
     getPaginationFromArtic().then((result) => {
       let newArtworkHistory = artworkHistory.concat(result);
-      console.log(artworkHistory.length, ">", result.length * 2);
-      setArtworkHistory(newArtworkHistory);
-      if (artworkHistory.length >= result.length * 2) {
-        setArtworkHistory(newArtworkHistory.slice(0, 24));
+      // Slice history if the length exceeds maximum
+      if (newArtworkHistory.length > artworkAmountPerSession) {
+        newArtworkHistory = newArtworkHistory.slice(0, artworkAmountPerSession);
       }
-
-      if (artworkHistory.length <= 11) {
+      setArtworkHistory(newArtworkHistory);
+      if (artworkHistory.length < artworkAmountPerPage - 1) {
         setArtworkHistoryPage(0);
       } else {
-        setArtworkHistoryPage(12); // 12 spaces for artworkHistory and 12 for the new results
+        setArtworkHistoryPage(artworkAmountPerSession - artworkAmountPerPage); // 12 spaces for below artworkHistory and 12 above for the new results
       }
+      setCurrentlyCollectingArtworks(false);
     });
-    setShowLoading(false); // End Loading effect
   }
 
-  function goBackToPreviousArtwork() {
-    setArtworkHistoryPage((artworkHistoryPage) => artworkHistoryPage - 1);
-    setArtData(artworkHistory[artworkHistoryPage - 1]);
-  }
-
-  function goForwardToNextArtwork() {
-    console.log(artworkHistoryPage, artworkHistory.length);
-    const step = 1;
-    if (artworkHistoryPage >= artworkHistory.length - 1) {
-      getArtworkData();
-    }
-
+  function changeArtworkHistoryPage(step: number) {
     setArtworkHistoryPage((artworkHistoryPage) => artworkHistoryPage + step);
     setArtData(artworkHistory[artworkHistoryPage + step]);
   }
 
-  if (firstRun) {
-    // getMetArtworkIDs().then((MetIDs) => {
-    //   getArtworkFromMet(MetIDs);
-    // });
-    //getArtworkFromArtic();
-    getArtworkData();
-    firstRun = false;
+  function goBackToPreviousArtwork() {
+    changeArtworkHistoryPage(-1);
+  }
+
+  function goForwardToNextArtwork() {
+    if (artworkHistoryPage >= artworkHistory.length - 1) {
+      if (!currentlyCollectingArtworks) {
+        getArtworkData();
+      }
+    }
+    changeArtworkHistoryPage(1);
+    if (artworkHistory[artworkHistoryPage].image_url === null) {
+      goForwardToNextArtwork();
+    }
   }
 
   return (
@@ -230,21 +222,26 @@ const Page: React.FC = () => {
 
       <IonContent fullscreen>
         <div>
-          {artworkHistoryPage !== 0 ? (
-            <IonButton onClick={() => goBackToPreviousArtwork()}>
-              <IonIcon icon={arrowBackOutline}></IonIcon>Go Back
-            </IonButton>
-          ) : null}
-          {/* <IonButton onClick={() => getArtworkData()}>
-            <IonIcon icon={shuffleOutline}></IonIcon>Random
-          </IonButton> */}
-          <IonButton onClick={() => goForwardToNextArtwork()}>
-            <IonIcon icon={arrowForwardOutline}></IonIcon>Go Forward
-          </IonButton>
-          {showLoading ? <IonSpinner name="bubbles"></IonSpinner> : null}
+          <IonRow>
+            <IonCol>
+              {artworkHistoryPage !== 0 ? (
+                <IonButton onClick={() => goBackToPreviousArtwork()}>
+                  <IonIcon icon={arrowBackOutline}></IonIcon>Go Back
+                </IonButton>
+              ) : null}
+            </IonCol>
+            <IonCol>
+              {currentlyCollectingArtworks ? (
+                <IonSpinner name="crescent"></IonSpinner>
+              ) : (
+                <IonButton onClick={() => goForwardToNextArtwork()}>
+                  Go Forward<IonIcon icon={arrowForwardOutline}></IonIcon>
+                </IonButton>
+              )}
+            </IonCol>
+          </IonRow>
         </div>
         {artData ? <Artwork {...artData}></Artwork> : null}
-        <IonLoading isOpen={showLoading}></IonLoading>
       </IonContent>
     </IonPage>
   );
