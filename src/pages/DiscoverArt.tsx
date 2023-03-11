@@ -142,9 +142,11 @@ async function getPageAmountFromArtic() {
 }
 
 async function getPaginationFromArtic() {
-  const artwork_IDs: number[] = await getFavoritedArtworksIDs().then((res) => {
-    return res;
-  });
+  const artwork_IDs: ArtworkI[] = await getFavoritedArtworksIDs().then(
+    (res) => {
+      return res;
+    }
+  );
 
   const artworks_info = await getPageAmountFromArtic().then(
     async (total_pages) => {
@@ -221,6 +223,7 @@ const DiscoverArt: React.FC = () => {
   function changeArtworkHistoryPage(step: number) {
     setArtworkHistoryPage((artworkHistoryPage) => artworkHistoryPage + step);
     setArtData(artworkHistory[artworkHistoryPage + step]);
+    setIsFavorited(artworkHistory[artworkHistoryPage].is_favorited);
   }
 
   function goBackToPreviousArtwork() {
@@ -229,25 +232,27 @@ const DiscoverArt: React.FC = () => {
 
   function goForwardToNextArtwork() {
     if (
-      artworkHistoryPage >= artworkHistory.length - 1 &&
+      artworkHistoryPage > artworkHistory.length - 1 &&
       !currentlyCollectingArtworks
     ) {
       getArtworkData();
     }
 
-    // If there is no image, skip the artwork
     if (artData) {
-      setIsFavorited(artworkHistory[artworkHistoryPage].is_favorited);
+      changeArtworkHistoryPage(1);
     }
-
-    changeArtworkHistoryPage(1);
   }
 
   function changeFavoritedStatus() {
-    setIsFavorited(isFavorited ? false : true);
+    artworkHistory[artworkHistoryPage].is_favorited = isFavorited
+      ? false
+      : true;
     const currentArtwork = artworkHistory[artworkHistoryPage];
-    if (!isFavorited) {
-      addArtworkToFirestore(currentArtwork.id, currentArtwork.artwork_url);
+
+    setIsFavorited(currentArtwork.is_favorited);
+
+    if (currentArtwork.is_favorited) {
+      addArtworkToFirestore(currentArtwork);
     } else {
       removeArtworkFromFirestore(currentArtwork.id);
     }
@@ -279,7 +284,7 @@ const DiscoverArt: React.FC = () => {
               {artworkHistoryPage !== 0 ? (
                 <IonButton
                   id="go-back-button"
-                  onClick={() => goBackToPreviousArtwork()}
+                  onClick={goBackToPreviousArtwork}
                 >
                   <IonIcon icon={arrowBackOutline}></IonIcon>Go Back
                 </IonButton>
@@ -289,7 +294,7 @@ const DiscoverArt: React.FC = () => {
               {auth.currentUser && !currentlyCollectingArtworks ? (
                 <div id="center-space">
                   <IonIcon
-                    onClick={() => changeFavoritedStatus()}
+                    onClick={changeFavoritedStatus}
                     size="large"
                     icon={isFavorited ? star : starOutline}
                   ></IonIcon>
@@ -302,7 +307,7 @@ const DiscoverArt: React.FC = () => {
               ) : (
                 <IonButton
                   id="go-forward-button"
-                  onClick={() => goForwardToNextArtwork()}
+                  onClick={goForwardToNextArtwork}
                 >
                   Go Forward<IonIcon icon={arrowForwardOutline}></IonIcon>
                 </IonButton>

@@ -10,7 +10,12 @@ import {
   IonNote,
 } from "@ionic/react";
 import { useLocation } from "react-router-dom";
-import { albumsOutline, bookmarkOutline, earthOutline } from "ionicons/icons";
+import {
+  albumsOutline,
+  bookmarkOutline,
+  earthOutline,
+  newspaperOutline,
+} from "ionicons/icons";
 import "./Menu.css";
 import { auth, googleSignIn } from "..//external/firebase";
 
@@ -33,6 +38,12 @@ const appPages: AppPage[] = [
     url: "/page/SavedArt",
     iosIcon: albumsOutline,
     mdIcon: albumsOutline,
+  },
+  {
+    title: "SpotNews",
+    url: "/page/SpotNews",
+    iosIcon: newspaperOutline,
+    mdIcon: newspaperOutline,
   },
 ];
 

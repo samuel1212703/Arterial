@@ -28,8 +28,11 @@ import "@ionic/react/css/display.css";
 import "./theme/variables.css";
 import SavedArt from "./pages/SavedArt";
 import DiscoverArt from "./pages/DiscoverArt";
+import SpotNews from "./pages/SpotNews";
 
 setupIonicReact();
+
+document.cookie = "samesite=strict";
 
 const App: React.FC = () => {
   return (
@@ -46,6 +49,9 @@ const App: React.FC = () => {
             </Route>
             <Route path="/page/SavedArt" exact={true}>
               <SavedArt />
+            </Route>
+            <Route path="/page/SpotNews" exact={true}>
+              <SpotNews />
             </Route>
           </IonRouterOutlet>
         </IonSplitPane>
