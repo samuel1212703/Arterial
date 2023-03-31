@@ -12,7 +12,6 @@ import {
   IonMenuButton,
   IonTitle,
 } from "@ionic/react";
-import { useParams } from "react-router";
 import Artwork from "../components/Artwork";
 import "./DiscoverArt.css";
 import axios from "axios";
@@ -190,8 +189,6 @@ async function getPaginationFromArtic() {
 }
 
 const DiscoverArt: React.FC = () => {
-  const { name } = useParams<{ name: string }>();
-
   const [artworkHistory, setArtworkHistory] = useState<ArtworkI[]>([]);
   const [artworkHistoryPage, setArtworkHistoryPage] = useState(0);
   const [artData, setArtData] = useState<ArtworkI | null>(null);
@@ -221,9 +218,9 @@ const DiscoverArt: React.FC = () => {
   }
 
   function changeArtworkHistoryPage(step: number) {
-    setArtworkHistoryPage((artworkHistoryPage) => artworkHistoryPage + step);
+    setIsFavorited(artworkHistory[artworkHistoryPage + step].is_favorited);
     setArtData(artworkHistory[artworkHistoryPage + step]);
-    setIsFavorited(artworkHistory[artworkHistoryPage].is_favorited);
+    setArtworkHistoryPage((artworkHistoryPage) => artworkHistoryPage + step);
   }
 
   function goBackToPreviousArtwork() {
@@ -244,13 +241,11 @@ const DiscoverArt: React.FC = () => {
   }
 
   function changeFavoritedStatus() {
-    artworkHistory[artworkHistoryPage].is_favorited = isFavorited
-      ? false
-      : true;
-    const currentArtwork = artworkHistory[artworkHistoryPage];
+    const currentArtwork = artworkHistory[artworkHistoryPage]; // Get current artwork
+    currentArtwork.is_favorited = currentArtwork.is_favorited ? false : true; // Set new favorite status
+    setIsFavorited(currentArtwork.is_favorited); // Update isFavorited variable to match new status so icon changes
 
-    setIsFavorited(currentArtwork.is_favorited);
-
+    // Update Firestore
     if (currentArtwork.is_favorited) {
       addArtworkToFirestore(currentArtwork);
     } else {
@@ -273,7 +268,7 @@ const DiscoverArt: React.FC = () => {
           <IonButtons slot="start">
             <IonMenuButton />
           </IonButtons>
-          <IonTitle>{name}</IonTitle>
+          <IonTitle>Discover Art</IonTitle>
         </IonToolbar>
       </IonHeader>
 

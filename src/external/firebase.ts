@@ -32,6 +32,10 @@ export const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
+export function setFeaturedContent(data: any) {
+  setDoc(doc(db, "FeaturedContent"), data);
+}
+
 // Functions
 export async function googleSignIn() {
   try {

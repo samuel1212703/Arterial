@@ -28,7 +28,7 @@ import "@ionic/react/css/display.css";
 import "./theme/variables.css";
 import SavedArt from "./pages/SavedArt";
 import DiscoverArt from "./pages/DiscoverArt";
-import SpotNews from "./pages/SpotNews";
+//import SpotNews from "./pages/SpotNews";
 
 setupIonicReact();
 
@@ -50,9 +50,9 @@ const App: React.FC = () => {
             <Route path="/page/SavedArt" exact={true}>
               <SavedArt />
             </Route>
-            <Route path="/page/SpotNews" exact={true}>
+            {/* <Route path="/page/SpotNews" exact={true}>
               <SpotNews />
-            </Route>
+            </Route> */}
           </IonRouterOutlet>
         </IonSplitPane>
       </IonReactRouter>

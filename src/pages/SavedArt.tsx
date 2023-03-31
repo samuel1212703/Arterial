@@ -1,4 +1,3 @@
-import { useParams } from "react-router";
 import {
   IonButtons,
   IonContent,
@@ -17,11 +16,8 @@ import Artwork from "../components/Artwork";
 import {
   arrowBackOutline,
   arrowForwardOutline,
-  playForwardCircleSharp,
-  playForwardOutline,
 } from "ionicons/icons";
 
-let firstRun = true;
 const artworksPerPage = 12;
 
 async function getArt() {
@@ -30,8 +26,6 @@ async function getArt() {
 }
 
 const SavedArt: React.FC = () => {
-  const { name } = useParams<{ name: string }>();
-
   const [favoritedArtworks, setFavoritedArtworks] = useState<ArtworkI[][]>([]);
   const [pageArtworks, setPageArtworks] = useState<ArtworkI[]>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -49,87 +43,85 @@ const SavedArt: React.FC = () => {
         artworksCollection.push(chunk);
       }
       setFavoritedArtworks(artworksCollection);
-      setPageNumber(0);
       setLoading(false);
+      setPageNumber(0);
     });
   }
 
   useEffect(() => {
+    if (favoritedArtworks.length === 0 && !loading) {
+      getFavoritedArtworks();
+    }
     setPageArtworks(favoritedArtworks[pageNumber]);
-  }, [pageNumber, loading, favoritedArtworks]);
-
-  if (firstRun) {
-    getFavoritedArtworks();
-    firstRun = false;
-  }
+  }, [pageNumber]);
 
   return (
     <IonPage>
-      {fullScreenImage ? (
-        <div
-          id="fullscreen-image-container"
-          onClick={() => {
-            setFullScreenImage(null);
-          }}
-        >
-          <Artwork key="fullScreenImage" {...fullScreenImage}></Artwork>
-        </div>
-      ) : null}
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
-          <IonTitle>{name}</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-
-      <IonContent fullscreen>
-        {!loading ? (
-          <div>
-            {pageArtworks
-              ? pageArtworks.map((artwork) => {
-                  return (
-                    <div
-                      key={artwork.id}
-                      style={{ width: "30%", display: "inline-flex" }}
-                    >
-                      <div onClick={() => setFullScreenImage(artwork)}>
-                        <Artwork key={artwork.id} {...artwork}></Artwork>
-                      </div>
-                    </div>
-                  );
-                })
-              : null}
-            <div>
-              <button
-                onClick={() => {
-                  setPageNumber((pageNumber) => pageNumber - 1);
-                }}
-              >
-                <IonIcon size="large" icon={arrowBackOutline}></IonIcon>
-              </button>
-              <button
-                onClick={() => {
-                  setPageNumber((pageNumber) => pageNumber + 1);
-                }}
-              >
-                <IonIcon size="large" icon={arrowForwardOutline}></IonIcon>
-              </button>
-              <button
-                onClick={() => {
-                  setPageNumber((pageNumber) => pageNumber + 2);
-                }}
-              >
-                <IonIcon size="large" icon={playForwardOutline}></IonIcon>
-              </button>
-            </div>
+      <div>
+        {fullScreenImage ? (
+          <div
+            id="fullscreen-image-container"
+            onClick={() => {
+              setFullScreenImage(null);
+            }}
+          >
+            <Artwork key="fullScreenImage" {...fullScreenImage}></Artwork>
           </div>
-        ) : (
-          <IonSpinner name="crescent"></IonSpinner>
-        )}
-        <div></div>
-      </IonContent>
+        ) : null}
+        <IonHeader>
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonMenuButton />
+            </IonButtons>
+            <IonTitle>Saved Art</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+
+        <IonContent fullscreen>
+          <div>
+            <button
+              onClick={() => {
+                setPageNumber((pageNumber) =>
+                  pageNumber > 0 ? pageNumber - 1 : pageNumber
+                );
+              }}
+            >
+              <IonIcon size="large" icon={arrowBackOutline}></IonIcon>
+            </button>
+            <button
+              onClick={() => {
+                setPageNumber((pageNumber) =>
+                  pageNumber <= favoritedArtworks.length
+                    ? pageNumber + 1
+                    : pageNumber
+                );
+              }}
+            >
+              <IonIcon size="large" icon={arrowForwardOutline}></IonIcon>
+            </button>
+          </div>
+          {!loading ? (
+            <div>
+              {pageArtworks
+                ? pageArtworks.map((artwork) => {
+                    return (
+                      <div
+                        key={artwork.id}
+                        style={{ width: "30%", display: "inline-flex" }}
+                      >
+                        <div onClick={() => setFullScreenImage(artwork)}>
+                          <Artwork key={artwork.id} {...artwork}></Artwork>
+                        </div>
+                      </div>
+                    );
+                  })
+                : null}
+            </div>
+          ) : (
+            <IonSpinner name="crescent"></IonSpinner>
+          )}
+        </IonContent>
+      </div>
     </IonPage>
   );
 };
