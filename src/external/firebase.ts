@@ -39,8 +39,8 @@ export function setFeaturedContent(data: any) {
 // Functions
 export async function googleSignIn() {
   try {
-    // const result = await signInWithPopup(auth, provider);
-    return true;
+    const result = await signInWithPopup(auth, provider);
+    return result;
   } catch (error) {
     return false;
   }
