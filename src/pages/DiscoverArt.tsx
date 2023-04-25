@@ -46,6 +46,7 @@ export interface ArtworkI {
   is_favorited: boolean;
 }
 
+/*
 async function getArtworkFromArtic() {
   //https://api.artic.edu/docs/
   let response = null;
@@ -131,6 +132,7 @@ async function getArtworkFromMet(IDs: number[]) {
     place_of_origin: artwork_info.city + artwork_info.country,
   };
 }
+*/
 
 async function getPageAmountFromArtic() {
   return await axios

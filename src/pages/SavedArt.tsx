@@ -13,10 +13,7 @@ import { getFavoritedArtworksIDs } from "../external/firebase";
 import { useEffect, useState } from "react";
 import { ArtworkI } from "./DiscoverArt";
 import Artwork from "../components/Artwork";
-import {
-  arrowBackOutline,
-  arrowForwardOutline,
-} from "ionicons/icons";
+import { arrowBackOutline, arrowForwardOutline } from "ionicons/icons";
 
 const artworksPerPage = 12;
 

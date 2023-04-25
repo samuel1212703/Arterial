@@ -25,7 +25,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// const analytics = getAnalytics(app);
 
 // Firebase Variables
 export const auth = getAuth(app);
@@ -39,7 +39,7 @@ export function setFeaturedContent(data: any) {
 // Functions
 export async function googleSignIn() {
   try {
-    const result = await signInWithPopup(auth, provider);
+    // const result = await signInWithPopup(auth, provider);
     return true;
   } catch (error) {
     return false;
